@@ -1,0 +1,66 @@
+#Inicia o PowerShell como ADM
+$currentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
+$testadmin = $currentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+if ($testadmin -eq $false) {
+Start-Process powershell.exe -Verb RunAs -ArgumentList ('-noprofile -noexit -file "{0}" -elevated' -f ($myinvocation.MyCommand.Definition))
+exit $LASTEXITCODE
+}
+
+#Remover Office Nativo
+Write-Host "Removendo Office Navivo"
+Get-AppxPackage -Name "Microsoft.MicrosoftOfficeHub" | Remove-AppxPackage
+cd D:\script\SaRACmd_17_01_0987_011
+.\SaRACmd.exe -S OfficeScrubScenario -AcceptEula
+
+Write-Host "Office Nativo Removido com sucesso"
+
+Start-Sleep -s 5
+
+#Instalar Office 2021
+Write-Host "Instalando Office 2021"
+cd D:\script
+.\setup.exe /configure configuration.xml
+
+Write-Host "Office 2021 Instalado com sucesso"
+
+Start-Sleep -s 300
+
+#Intalar Acrobat Reader
+Write-Host "Instalando Acrobat Reader"
+cd D:\script
+Start-Process -FilePath "D:\script\AcroRdrDC2300620380_pt_BR.exe" -ArgumentList "/sAll /rs /rps /msi /norestart /quiet EULA_ACCEPT=YES" -Wait
+
+Write-Host "Acrobat DC instalado com sucesso"
+
+Start-Sleep -s 50
+
+#Instalar Anydesk
+Write-Host "Instalando Anydesk"
+cd D:\script
+.\AnyDesk.exe --install "C:\Program Files (x86)\AnyDesk" --start-with-win --create-desktop-icon --silent -Wait
+
+Write-Host "AnyDesk Instalado com sucesso"
+
+Start-Sleep -s 5
+
+#Instalar Java 8
+Write-Host "Instalando Java 8"
+cd D:\script
+Start-Process -FilePath "D:\script\JavaSetup8u401.exe" -ArgumentList "/s" -Wait
+
+Write-Host "Java 8 Instalado com sucesso"
+
+Start-Sleep -s 5
+
+#Intalar checkPoint 
+Write-Host "Instaladno Check Point"
+cd D:\script
+Start-Process -FilePath "D:\script\Endpoint_SENAC-GO\EPS_SENAC_NOTEBOOKS_COM_VPN.msi" -PassThru
+
+Write-Host "Check Point Instalado com sucesso"
+
+Write-Host "Validar todas instalações"
+
+Start-Process "control.exe" -ArgumentList "/name Microsoft.ProgramsAndFeatures"
+
+Start-Sleep -s 5
