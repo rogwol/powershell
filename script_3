@@ -1,0 +1,21 @@
+#Inicia o PowerShell como ADM
+$currentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
+$testadmin = $currentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+if ($testadmin -eq $false) {
+Start-Process powershell.exe -Verb RunAs -ArgumentList ('-noprofile -noexit -file "{0}" -elevated' -f ($myinvocation.MyCommand.Definition))
+exit $LASTEXITCODE
+}
+
+# Obtém dinamicamente o nome do computador
+$ComputerName = $env:COMPUTERNAME
+
+# Define as credenciais de um usuário com permissões para adicionar computadores ao domínio
+$DomainUsername = "dominio\usuario.login"
+$DomainPassword = ConvertTo-SecureString -String "senha" -AsPlainText -Force
+$Domain = "dominio.com.br"
+
+# Adiciona o computador ao domínio
+Add-Computer -ComputerName $ComputerName -DomainName $Domain -Credential (New-Object PSCredential -ArgumentList $DomainUsername, $DomainPassword) -Restart -Force
+
+# Exibe uma mensagem informando que o computador foi adicionado ao domínio
+Write-Host "O computador $ComputerName foi adicionado ao domínio $Domain."
