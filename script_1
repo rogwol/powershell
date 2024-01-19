@@ -1,0 +1,39 @@
+#Inicia o PowerShell como ADM
+$currentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
+$testadmin = $currentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+if ($testadmin -eq $false) {
+Start-Process powershell.exe -Verb RunAs -ArgumentList ('-noprofile -noexit -file "{0}" -elevated' -f ($myinvocation.MyCommand.Definition))
+exit $LASTEXITCODE
+}
+
+#Cria usuário Administrador Local
+# Alterar o nome do usuário e atribuir uma senha, manter ""
+$Username = "seu usuário"
+$Password = "sua senha"
+
+$SecurePassword = ConvertTo-SecureString -String $Password -AsPlainText -Force
+New-LocalUser -Name $Username -Password $SecurePassword -UserMayNotChangePassword -PasswordNeverExpires
+Add-LocalGroupMember -Group "Administradores" -Member $Username
+
+
+#Renomear o Computador
+# Executar o comando wmic para obter o número de série da BIOS e armazenar na variável $serial
+$serial = wmic bios get serialnumber | findstr /v /c:"SerialNumber"
+
+# Verificar se $serial é um array e extrair o primeiro elemento
+if ($serial -is [array]) {
+    $serial = $serial[1].Trim()
+} else {
+    $serial = $serial.Trim()
+}
+
+# Verificar se $serial é uma string não vazia
+if ($serial -ne $null -and $serial -ne '') {
+    # Remover espaços em branco e caracteres especiais da variável $serial
+    $serial = $serial -replace '\s', '' -replace '\W', ''
+
+    # Renomear o computador com base no número de série
+    Rename-Computer -NewName $serial -Force -Restart
+} else {
+    Write-Host "Não foi possível obter o número de série da BIOS."
+}
